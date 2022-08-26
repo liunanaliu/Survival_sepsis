@@ -1,0 +1,77 @@
+install.packages('hdf5r')
+
+#220621 for plot modification and export as .tiff
+setwd("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification")
+tiff(filename = 'pi1.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi1a + pi1b #error
+pi1 <- ggarrange(pi1a$plot,pi1b,pi1a$table,pi1t,
+                 ncol = 2,
+                 nrow = 2,
+                 heights = c(.6,.4),#no effect
+                 #common.legend = T,
+                # legend = 'right',
+                 widths = c(1,.8),
+                 labels = c('A','B'),
+                 #align = c('v','h'),
+                 #label.y = c(1,1),
+                 font.label = list(size=26),
+                common.legend = T)
+pi1
+
+dev.off()
+
+tiff(filename = 'pi1si.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi1si <- ggarrange(pi1s1,pi1sT,ncol = 1,
+                   #font.label = list(size=26),
+                   heights = c(.6,0.4))
+pi1si
+dev.off()
+
+library(scales)
+hex <- hue_pal()(5)
+hex
+#get the default color parameter for 5 groups
+tiff(filename = 'pi2.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi2 <- ggarrange(pi2a,pi2c,pi2b,pi2ds,#ncol = 2,
+                 font.label = list(size=26),
+                 #common.legend = c(1,3,4)
+          labels = c('A','C','B','D'))
+#https://github.com/kassambara/ggpubr/issues/347 unsolved
+pi2
+dev.off()
+
+tiff(filename = 'pi3.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+pi3 <- ggarrange(pi3a,pi3b,ncol = 1,
+          common.legend =T,#legend = c(1,2),https://github.com/kassambara/ggpubr/issues/160 
+          font.label = list(size=20),
+          labels = c('A','B'))
+pi3
+dev.off()
+
+tiff(filename = 'pi4.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+pi4 <- ggarrange(pi4a,pi4c,pi4b,pi4ds,#ncol = 2,
+                 font.label = list(size=20),
+                 labels = c('A','C','B','D'))
+  
+
+pi4
+dev.off()
+
