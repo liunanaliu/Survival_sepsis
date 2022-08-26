@@ -1,0 +1,169 @@
+#20220214nanaliu analysis for qpcr
+library(readxl)
+library(ggplot2)
+library(svglite)
+qpcr_td <- read_excel("B:/ORG/Forschung/AN3/Liu_Na_LN/qpcr/20220214_qpcr_td.xlsx")
+tdtomato_ct=qpcr_td
+tdtomato_ct=tdtomato_ct[,c(1,2,3,6)]
+tdtomato_ct$group=paste(tdtomato_ct$micelle,tdtomato_ct$treatment,sep = "")
+#tdtomato_ct=tdtomato_ct[,c(3:5)]
+names(tdtomato_ct)[4]="expression"
+tdtomato_ct$injection=ifelse(tdtomato_ct$`muscle (right/left)`=='Right',
+                             'free_DNA(R)','polyplex(L)')
+
+
+con=tdtomato_ct[tdtomato_ct$treatment=='con',]
+sum(con$expression)
+sum(con$expression)/5
+#with sample of zero values 71643.73
+sum(con$expression)/10
+#without sample of zero values 35821.87
+#consider 332235.349 as an outlier
+(sum(con$expression)-332235.349)/10
+#2598.33
+ 
+
+tdtomato_ct$expression1=ifelse(tdtomato_ct$treatment=='con',
+                              1,tdtomato_ct$expression)
+#make all the con as 1
+tdtomato_ct$expression1=ifelse(tdtomato_ct$expression1<1,
+                               1,tdtomato_ct$expression1)
+#make other values les than the mean of con as 1
+
+tdtomato_ct$group=ifelse(tdtomato_ct$treatment=='con','Untreated',
+                         tdtomato_ct$group)
+#combine all the con samples as untreated group
+tdtomato_ct$group=factor(tdtomato_ct$group,
+                         levels = c('Untreated','HAC24h','HAC48h','PEI24h','PEI48h'))
+
+tdtomato_ct=tdtomato_ct[,c(1,5,6,7)]
+save(tdtomato_ct,file='tdtomato_ct.rda')
+
+p=ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_jitter(size = 3, shape = 21,
+              stroke = 0.01, show.legend = FALSE, alpha=.6,
+              position = position_jitterdodge(jitter.height=1,dodge.width = 1))+
+  labs(x="",y="TdTomato expression(CN/ng mRNA)")
+p
+
+#1-change the jitter on the same line
+#2-change the y-axis from 0 instead of inf
+#20220216nanaliu 
+load('tdtomato_ct.rda')
+p=ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_jitter(size = 3, shape = 21,
+              stroke = 0.01, show.legend = FALSE, alpha=.6,
+              position = position_jitterdodge(jitter.height=1,jitter.width = 0))+
+  labs(x="",y="TdTomato expression(CN/ng mRNA)")
+p
+#
+{ install.packages('gg.gap')
+library(gg.gap)
+gg.gap(plot = p,segments = c(1,3),
+       ylim = c(0,1e+10)))
+}
+
+#
+{install.packages('ggbeeswarm')
+library(ggbeeswarm)
+p=ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  labs(x="",y="TdTomato expression(CN/ng mRNA)")
+p+geom_beeswarm(groupOnX = F,size = 3, shape = 21,
+                stroke = 0.01, show.legend = FALSE, alpha=.6,
+                dodge.width = 2)}
+#1-change the jitter on the same line
+p=ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_jitter(size = 3, shape = 21,
+              stroke = 0.01, show.legend = FALSE, alpha=.6,
+              position = position_jitterdodge(jitter.height=1,jitter.width = 0,
+                                              dodge.width =.5 ))+
+  labs(x="group for treatment",y="TdTomato expression(CN/ng mRNA)")
+p
+
+{gg.gap(plot = p,segments = c(10,1000),
+       ylim = c(0,1e+10))
+ggsave('barplot_td.svg',p,dpi = 300)}
+
+p+geom_rect()
+{ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_point(position = 'jitter',color=injection)}
+#lon10(raw data)- failed
+{ggplot(tdtomato_ct,aes(group,log10(expression1),fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  geom_jitter(size = 3, shape = 21,
+              stroke = 0.01, show.legend = FALSE, alpha=.6,
+              position = position_jitterdodge(jitter.height=1,jitter.width = 0))+
+  labs(x="group for treatment",y="TdTomato expression(CN/ng mRNA)")}
+
+#i guess the main question is to avoid the jitter below zero
+ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_point(position = 'jitter')
+#how to make the dot at the same line, and start from zero
+ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_point(position = position_jitterdodge(jitter.height=0.5,
+                                             jitter.width = 0))
+#no difference  
+ggplot(tdtomato_ct,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_point(position=position_jitter(width = 0,height = 1),
+             aes(group,expression1+2))              
+
+#20220217nanaliu 
+#specify the inclusion and exclusion for analysis
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+tdtomato_ct$inclusion <- 'Y'
+tdtomato_ct$inclusion[c(17,34,40)] <- 'N'
+#tdtomato_ct$group[c(1,4,7,8,11,12,15,16,22,23)] <- 'Naive'
+table(tdtomato_ct$inclusion)
+save(tdtomato_ct,file = 'tdtomato_ct.rda')
+tdtomato=filter(tdtomato_ct,inclusion=='Y')
+
+
+p=ggplot(tdtomato,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+  geom_jitter(size = 3, shape = 21,
+              stroke = 0.01, show.legend = FALSE, alpha=.6,
+              position = position_jitterdodge(jitter.height=1,jitter.width = 0))+
+  labs(x="",y="TdTomato expression(CN/ng mRNA)")
+p
+
+p=ggplot(tdtomato,aes(group,expression1,fill=injection))+
+  geom_bar(position = position_dodge(),stat = 'summary',alpha=.3)+
+  theme_classic()+
+  scale_y_log10()+
+geom_point(aes(color=injection),binaxis='y', stackdir='center',
+           position=position_dodge(0.75), 
+           size=3)+
+  labs(x="",y="TdTomato expression(CN/ng mRNA)")
+p
+ggsave('20220217barplot_td.svg',p,dpi = 300)
