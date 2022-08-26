@@ -1,0 +1,333 @@
+##220610 plot modification 4
+#including fig3-4 for body weight and css !
+setwd("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification")
+
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)
+library(processx)
+library(ggprism)
+Sys.setenv(LANG = "en")
+
+#add space with time (d) for all, very important!!!
+library(survival)
+library(survminer)
+library(KMsurv)
+
+#load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/combine_bw2.rda")
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/combined_bw_wide2.rda")
+combined_bw_wide <- combined_bw_wide2
+#see details in 220601_combined_analysis-1.r command 386
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/res2.rda")
+
+tiff(filename = 'pi3a.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi3a <- ggline(combined_bw_wide,'time','weight',
+              linetype = 'Analgesic',size= 2,
+              color = 'Analgesic',
+              add ='mean_se',error.plot = 'upper_errorbar')+
+  scale_x_discrete(labels = c('0','0.75','1.75',
+                              '2.75','3.75',
+                              '4.75','5.75',
+                              '6.75','7'))+
+  labs(y='Body weight (g)',x='Time (d)')+
+  theme(axis.title.y = element_text(size=26,face = 'bold'),
+        axis.text.y = element_text(size = 18,face = 'bold'),
+        axis.title.x = element_text(size = 26,face = 'bold'),
+        axis.text.x = element_text(size=18,face='bold'),
+        legend.text=element_text(size=24,face = 'bold'),
+        legend.title=element_blank())+
+  geom_bracket(data = res2,aes(xmin=time,
+                               xmax=time,
+                               label=p.signif),
+               label.size = 8,
+               y.position = res2$y.position,
+               linetype  = "blank")
+
+pi3a
+save(pi3a,file = 'pi3a.rda')
+save(res2,file = 'res2.rda')
+dev.off()
+
+res <- compare_means(weight ~ Analgesic,
+                     group.by = c('time','Sex'),
+                     data = combined_bw_wide)
+#48
+res3 <- res %>% filter(p.signif !='ns')
+#11
+res3$y.position <- .8
+fix(res3)
+
+save(res3,file = 'res3.rda')
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/res3.rda")
+combined_bw_wide$Sex <- recode(combined_bw_wide$Sex,'f'='Female','m'='Male')
+res3$Sex <- recode(res3$Sex,'f'='Female','m'='Male')
+
+tiff(filename = 'pi3b.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi3b <- ggline(combined_bw_wide,'time','weight',
+              linetype = 'Analgesic',size = 1.8,
+              color = 'Analgesic',
+              add ='mean_se',error.plot = 'upper_errorbar',
+              facet.by = 'Sex')+
+  scale_x_discrete(labels = c('0','0.75','1.75',
+                              '2.75','3.75',
+                              '4.75','5.75',
+                              '6.75','7'))+
+  labs(y='Body weight (g)',x='Time (d)')+
+  theme(axis.title.y = element_text(size=26,face='bold'),
+        axis.text.y = element_text(size = 18,face = 'bold'),
+        axis.title.x = element_text(size = 26,face = 'bold'),
+        axis.text.x = element_text(size=18,face='bold'),
+        legend.text=element_text(size=24,face = 'bold'),
+        legend.title=element_blank(),
+        strip.text.x = element_text(size = 20,face = 'bold'))+
+  geom_bracket(data = res3,aes(xmin=time,
+                               xmax=time,
+                               label=p.signif),
+               label.size = 8,
+               y.position = res3$y.position,
+               linetype  = "blank")
+
+pi3b
+save(pi3b,file = 'pi3b.rda')
+fix(res3)
+save(res3,file = 'res3.rda')
+dev.off()
+
+tiff(filename = 'pi3_0714.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi3 <- ggarrange(pi3a,pi3b,ncol = 1,
+                 common.legend =T,#legend = c(1,2),https://github.com/kassambara/ggpubr/issues/160 
+                 font.label = list(size=26),
+                 labels = c('A','B'))
+#https://github.com/kassambara/ggpubr/issues/347 unsolved
+pi3
+save(pi3,file = 'pi3.rda')
+dev.off()
+
+library(ggpubr)
+ggarrange(pi3a,pi3b,ncol = 1,
+          labels = c('A','B'))
+
+#for css
+#change y-axis name as Cumulative CSS points
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/combined_css_wide6.rda")
+table(combined_css_wide6$criteria)
+css_overall_wide <- combined_css_wide6
+css_overall_wide_wo <- css_overall_wide[css_overall_wide$criteria!='o',]
+#5120
+css_overall_wide_o <- css_overall_wide[css_overall_wide$criteria=='o',]
+#1280
+sum(is.na(css_overall_wide_o))
+#250
+
+res <- compare_means(css_points ~ Analgesic,
+                     group.by = 'time',
+                     data = css_overall_wide_o)
+#45
+res2_css <- res %>% filter(p.signif !='ns')
+#11
+fix(res2_css)
+res2_css$y.position <- 4
+save(res2_css,file = 'res2_css.rda')
+#summarize by group to get the medium and error bar
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/res2_css.rda")
+
+tiff(filename = 'pi4a.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi4a <- ggline(css_overall_wide_o,'time','css_points',
+               linetype = 'Analgesic',size = 1.5,
+               color = 'Analgesic',
+               add ='mean_se',error.plot = 'upper_errorbar')+
+  scale_fill_hue(l=80,c=45)+
+  scale_x_discrete(labels = c('0','','0.75','','1.75',
+                              '','2.75','','3.75',
+                              '','4.75','','5.75',
+                              '','6.75',''))+
+  labs(x='Time (d)',y='Cumulative CSS points')+
+  theme(axis.title.y = element_text(size=20,face='bold'),
+        axis.text.y = element_text(size = 16,face = 'bold'),
+        axis.title.x = element_text(size = 20,face = 'bold'),
+        axis.text.x = element_text(size=16,face='bold'),
+        legend.text=element_text(size=18,face = 'bold'),
+        legend.title=element_blank())+
+  geom_bracket(data = res2_css,aes(xmin=time,
+                                   xmax=time,
+                                   label=p.signif),
+               label.size = 6,
+               y.position = res2_css$y.position,
+               linetype  = "blank")
+
+pi4a
+save(pi4a,file = 'pi4a.rda')
+fix(res2_css)
+save(res2_css,file = 'res2_css.rda')
+dev.off()
+
+res <- compare_means(css_points ~ Analgesic,
+                     group.by = c('time','Sex'),
+                     data = css_overall_wide_o)
+#85
+res3_css <- res %>% filter(p.signif !='ns')
+#15
+fix(res3_css)
+res3_css$y.position <- 4
+save(res3_css,file = 'res3_css.rda')
+
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/res3_css.rda")
+css_overall_wide_o$Sex <- recode(css_overall_wide_o$Sex,'f'='Female','m'='Male')
+res3_css$Sex <- recode(res3_css$Sex,'f'='Female','m'='Male')
+
+
+tiff(filename = 'pi4b.tiff', #pi2b, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi4b <- ggline(css_overall_wide_o,'time','css_points',
+               linetype = 'Analgesic',size = 1.5,
+               color = 'Analgesic',
+               add ='mean_se',error.plot = 'upper_errorbar',
+               facet.by = 'Sex')+
+  #theme_classic()+
+  scale_x_discrete(labels = c('0','','0.75','','1.75',
+                              '','2.75','','3.75',
+                              '','4.75','','5.75',
+                              '','6.75',''))+
+  labs(x='Time (d)',y='Cumulative CSS points')+
+  theme(axis.title.y = element_text(size=20,face='bold'),
+        axis.text.y = element_text(size = 16,face = 'bold'),
+        axis.title.x = element_text(size = 20,face = 'bold'),
+        axis.text.x = element_text(size=14,face='bold'),
+        legend.text=element_text(size=18,face = 'bold'),
+        legend.title=element_blank(),
+        strip.text.x = element_text(size = 16,face = 'bold'))+
+  geom_bracket(data = res3_css,aes(xmin=time,
+                                   xmax=time,
+                                   label=p.signif),
+               label.size = 6,
+               y.position = res3_css$y.position,
+               linetype  = "blank")
+
+pi4b
+save(pi4b,file = 'pi4b.rda')
+dev.off()
+
+tiff(filename = 'pi4c.tiff', #
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+n1 <- c(30,30,30,30,29,24,24,24,21,19,19,19,19,19,19,19)
+n2 <- c(31,31,31,31,27,27,24,23,23,23,23,18,18,18,17,17)
+n3 <- c(19,19,19,19,18,18,17,16,16,16,16,16,16,16,16,16)
+n <- n1+n2+n3
+
+pi4c<- ggplot(css_overall_wide_wo,aes(x=time,y=css_points,
+                                            fill=criteria))+
+  geom_bar(position = 'fill',stat = 'identity')+
+  scale_x_discrete(labels = c('0','','0.75','','1.75',
+                              '','2.75','','3.75',
+                              '','4.75','','5.75',
+                              '','6.75',''))+
+  theme_classic()+
+  labs(x='Time(d)',y='Cumulative CSS distribution',fill='Criteria')+
+  theme(axis.title.y = element_text(size=20,face='bold'),
+        axis.text.y = element_text(size = 14,face = 'bold'),
+        axis.title.x = element_text(size = 20,face = 'bold'),
+        axis.text.x = element_text(size=16,face='bold'),
+        legend.position = 'top',
+        legend.text=element_text(size=12,face = 'bold'),
+        legend.title=element_text(size=14,face = 'bold'))+
+  annotate('text',
+           x=1:length(table(css_overall_wide_wo$time)),
+           y=0.05,
+           label=n,
+           col='black',
+           size=4,
+           vjust=-1,
+           fontface='bold')+
+  scale_fill_discrete(labels= c('Activity','Posture',
+                               'Reaction','Symptomatic'))
+pi4c
+
+save(pi4c,file = 'pi4c.rda')
+dev.off()
+
+tiff(filename = 'pi4ds.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+css_overall_wide_wo$criteria <- recode(css_overall_wide_wo$criteria,
+                                       'a' ='Activity','p' ='Posture',
+                                      'r'  ='Reaction','s' ='Symptomatic') 
+pi4ds <- ggline(css_overall_wide_wo,'time','css_points',
+                linetype = 'Analgesic',
+                size = 1.5,
+                color = 'Analgesic',
+                add ='mean_se',error.plot = 'upper_errorbar',
+                facet.by = 'criteria')+
+  scale_x_discrete(labels = c('0','','0.75','','1.75',
+                              '','2.75','','3.75',
+                              '','4.75','','5.75',
+                              '','6.75',''))+
+  labs(x='Time(d)',y='Cumulative CSS distribution',fill='Criteria')+
+  #scale_x_discrete(breaks = c(0,0.75,1.75,2.75,
+  #     3.75,4.75,5.75,6.75,7))+
+  #scale_fill_hue(l=80,c=45)+ wnt to change the color of filled
+  theme(axis.title.y = element_text(size=20,face='bold'),
+        axis.text.y = element_text(size = 16,face = 'bold'),
+        axis.title.x = element_text(size = 20,face = 'bold'),
+        axis.text.x = element_text(size=14,face='bold'),
+        legend.text=element_text(size=18,face = 'bold'),
+        legend.title=element_blank(),
+        strip.text.x = element_text(face = 'bold',size = 16))
+  #facet_wrap(~criteria,ncol = 2)#excellant arrangement!!!
+#https://ggplot2-book.org/facet.html
+#scale_fill_discrete(labels=c('Cheek bulge','Ear position','Nose bulge',
+#                             'Orbital tightening','Whisker change'))
+
+pi4ds
+save(pi4ds,file = 'pi4ds.rda')
+dev.off()
+
+
+res4_css <- compare_means(css_points ~ Analgesic,
+                      group.by = c('time','criteria'),
+                      data = css_overall_wide_wo)
+
+res4_css <- res4_css %>% filter(p.signif !='ns')
+#32
+save(res4_css,file = 'res4_css_0630.rda')
+library(writexl)
+write_xlsx(res4_css,'220629res4_css.xlsx')
+
+#error bar is wrong for facdet_wrap!!! 
+tiff(filename = 'pi4_0714.tiff', 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi4 <- ggarrange(pi4a,pi4b,pi4c,pi4ds,#ncol = 2,
+                 font.label = list(size=26),
+                 widths = c(.6,1,.6,1),
+                 #common.legend = c(1,3,4)
+                 labels = c('A','B','C','D'))
+#https://github.com/kassambara/ggpubr/issues/347 unsolved
+pi4
+dev.off()
+
