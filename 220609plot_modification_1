@@ -1,0 +1,212 @@
+#add p-value compared to 2 groups
+library(survival)
+library(survminer)
+library(KMsurv)
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("kassambara/survminer", build_vignettes = FALSE)
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/combined_surv.rda")
+
+surv <- Surv(combined_sur$`Duration (days)`,
+             combined_sur$`Status             (0=live, 1 = dead)`==1)
+
+is.factor(combined_sur$Analgesic)
+combined_sur$Analgesic <- factor(combined_sur$Analgesic,
+                       labels = c('No','Metapyrin','Melosus'))
+
+Surv(combin)
+Sys.setenv(LANG = "en")
+
+sum(is.na(combined_sur))
+#0
+names(combined_sur)[c(7,8)] <- c('time','status')
+summary(combined_sur)
+
+surv <- Surv(combined_sur$`Duration (days)`,combined_sur$`Status             (0=live, 1 = dead)`==1)
+kmfit1 <- survfit(Surv(time,status)~1,
+                  data = combined_sur)
+
+
+survplot <- ggsurvplot(kmfit1,data = combined_sur,
+                       title='survival plot of PCI')
+survplot <- ggsurvplot(kmfit1,
+           #data = combined_sur,
+           legend.title='',
+           legend.labs='Sepsis',
+           break.time.by=1,
+           pval = T,pval.method = T,
+           risk.table = T,ncensor.plot=F,
+           risk.table.title='Number at risk by time',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           title='Survival plot of PCI',
+           xlab='Time(d)')
+survplot$plot+
+  geom_hline(yintercept=1,size=1)
+#no
+
+kmfit2 <- survfit(surv~combined_sur$Sex)
+ggsurvplot(kmfit2,data = combined_sur,pval = T,
+           risk.table = T,ncensor.plot=F,
+           title='survival plot by gender')
+
+kmfit2 <- survfit(Surv(time,status)~Sex,
+                  data = combined_sur)
+ggsurvplot(kmfit2,
+           #data = combined_sur,
+           legend.title='Gender',
+           legend.labs=c('Female','Male'),
+           break.time.by=1,
+           pval = T,pval.method = T,
+           risk.table = T,ncensor.plot=F,
+           risk.table.title='Number at risk by time',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           title='Survival plot by gender',
+           xlab='Time(d)')
+
+
+
+
+#it seems like the status should be numeric
+combined_sur$status <- as.numeric(combined_sur$status)
+survdiff(surv~combined_sur$Analgesic)
+survdiff(surv~factor(Analgesic),
+         data = combined_sur)
+res <- pairwise_survdiff(Surv(time,status) ~ Analgesic,
+                  data = combined_sur,
+                  p.adjust.method = 'BH')
+res
+#          No   Metapyrin
+# Metapyrin 0.38 -        
+# Melosus   0.22 0.38  
+kmfit3 <- survfit(surv~combined_sur$Analgesic)
+xtabs(combined_sur$status~combined_sur$Analgesic)
+#       No Metapyrin   Melosus 
+#       6         9        13 
+table(combined_sur$Analgesic)
+#       No Metapyrin   Melosus 
+#       27        26        27 
+kmfit3 <- survfit(Surv(time,status)~Analgesic,
+                  data = combined_sur)
+ggsurvplot(kmfit3,
+           #data = combined_sur,
+           legend.title='Analgesic',
+           legend.labs=c('Melosus','Metapyrin','No'),
+           break.time.by=1,
+           pval = T,pval.method = T,
+           risk.table = T,ncensor.plot=F,
+           risk.table.title='Number at risk by time',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           title='Survival plot by analgesic',
+           xlab='Time(d)')
+  
+#220609 modify plot
+#add labels for css
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/combined_css_wide6.rda")
+table(combined_css_wide6$criteria)
+library(ggsignif)
+library(ggplot2)
+library(ggpubr)
+library(processx)
+library(ggprism)
+css_overall_wide <- combined_css_wide6
+css_overall_wide_wo <- css_overall_wide[css_overall_wide$criteria!='o',]
+#5120
+css_overall_wide_o <- css_overall_wide[css_overall_wide$criteria=='o',]
+#1280
+sum(is.na(css_overall_wide_o))
+#250
+
+n1 <- c(30,30,30,30,29,24,24,24,21,19,19,19,19,19,19,19)
+n2 <- c(31,31,31,31,27,27,24,23,23,23,23,18,18,18,17,17)
+n3 <- c(19,19,19,19,18,18,17,16,16,16,16,16,16,16,16,16)
+n <- n1+n2+n3
+
+lp4<- ggplot(css_overall_wide_wo,aes(x=time,y=css_points,
+                                     fill=criteria))+
+  geom_bar(position = 'fill',stat = 'identity')+
+  labs(x='Time(d)',y='Css_points',fill='Criteria')+
+  theme(axis.title=element_text(size=16,face='bold'),
+        legend.text=element_text(size=8),
+        legend.title=element_text(size=10,face = 'bold'),
+        axis.title.x = element_text(face = 'bold'),
+        axis.text.y = element_text(face = 'bold'))+
+  annotate('text',
+           x=1:length(table(css_overall_wide_wo$time)),
+           y=0.05,
+           label=n,
+           col='black',
+           vjust=-1)+scale_fill_discrete(labels=c('Activity','Posture',
+                                                 'Reaction','Symptomatic'))
+lp4
+
+lp5 <- ggplot(css_overall_wide_wo,aes(x=time,y=css_points,
+                                     fill=criteria))+
+  geom_bar(position = 'fill',stat = 'identity')+
+  facet_grid(~Analgesic)+
+  labs(x='Time(d)',y='Css_points',fill='Criteria')+
+  theme(axis.title=element_text(size=16,face='bold'),
+        legend.text=element_text(size=8),
+        legend.title=element_text(size=10,face = 'bold'),
+        axis.title.x = element_text(face = 'bold'),
+        axis.text.y = element_text(face = 'bold'))+
+  scale_fill_discrete(labels=c('Activity','Posture',
+                                                  'Reaction','Symptomatic'))
+lp5
+# +scale_fill_discrete(labels=c('Activity','Posture',
+#                               'Reaction','Symptomatic'))
+#+   labs(x='Time(d)',y='Pain') 
+#change x-label as time(d)
+#change the size of axis, and bold
+# +theme(axis.title=element_text(size=20,face='bold'),
+#          legend.text=element_text(size=20),
+#           legend.title=element_text(size=20))
+#ref https://statisticsglobe.com/change-font-size-of-ggplot2-plot-in-r-axis-text-main-title-legend
+
+#add amount of observations with pain scores
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification/pain_overall_long.rda")
+pain_overall_wide <- pain_overall_long
+n1 <- c(30,30,30,30,29,24,24,24,21,19,19,19,19,19,19,19)
+n2 <- c(31,31,31,31,27,27,24,23,23,23,23,18,18,18,17,17)
+n3 <- c(19,19,19,19,18,18,17,16,16,16,16,16,16,16,16,16)
+n <- n1+n2+n3
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/combine_pain_overall_wide.rda")
+
+lp3<- ggplot(combine_pain_overall_wide,aes(x=time,y=pain,
+                                           fill=pain_type))+
+  geom_bar(position = 'fill',stat = 'identity')+
+  labs(x='Time(d)',y='Pain',fill='Criteria')+
+  theme(axis.title=element_text(size=16,face='bold'),
+        legend.text=element_text(size=8),
+        legend.title=element_text(size=10,face = 'bold'),
+        axis.title.x = element_text(face = 'bold'),
+        axis.text.y = element_text(face = 'bold'))+
+  annotate('text',
+           x=1:length(table(combine_pain_overall_wide$time)),
+           y=0.05,
+           label=n,
+           col='black',
+           vjust=-1)+
+  scale_fill_discrete(labels=c('Cheek bulge','Ear position','Nose bulge',
+                               'Orbital tightening','Whisker change'))
+lp3
+
+lp4<- ggplot(combine_pain_overall_wide,aes(x=time,y=pain,
+                                           fill=pain_type))+
+  geom_bar(position = 'fill',stat = 'identity')+
+  labs(x='Time(d)',y='Pain',fill='Criteria')+
+  theme(axis.title=element_text(size=16,face='bold'),
+        legend.text=element_text(size=8),
+        legend.title=element_text(size=10,face = 'bold'),
+        axis.title.x = element_text(face = 'bold'),
+        axis.text.y = element_text(face = 'bold'),
+        strip.text.x = element_text(face = 'bold',size = 10))+
+  facet_grid(~Analgesic)+
+  scale_fill_discrete(labels=c('Cheek bulge','Ear position','Nose bulge',
+                               'Orbital tightening','Whisker change'))
+
+lp4
