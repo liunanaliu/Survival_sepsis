@@ -1,0 +1,452 @@
+#220610 modification-2 
+setwd("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/220603plot_modification")
+
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)
+library(processx)
+library(ggprism)
+Sys.setenv(LANG = "en")
+
+#add space with time (d) for all, very important!!!
+library(survival)
+library(survminer)
+library(KMsurv)
+
+load("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/20220601combined_3runs/combined_surv.rda")
+names(combined_sur)[c(7,8)] <- c('time','status')
+combined_sur$status <- as.numeric(combined_sur$status)
+combined_sur$time <- as.numeric(combined_sur$time)
+summary(combined_sur)
+
+kmfit3 <- survfit(Surv(time,status)~Analgesic,
+                  data = combined_sur)
+
+kmfit3
+
+tiff(filename = 'pi1a.tiff', #pi1a, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+#https://stackoverflow.com/questions/59041065/how-do-i-change-the-font-for-all-elements-in-ggsurvplot
+pi1a <- ggsurvplot(kmfit3,
+           #data = combined_sur,
+           #fun = 'pct',
+           #legend='bottom',
+           size=1.8,
+           font.legend = c(18, "bold"),
+           font.x=c(20,'bold'),
+           font.y=c(20,'bold'),
+           font.caption=c(14,'bold'),
+           font.tickslab=c(16,'bold'),#for x,and y axis
+           legend.title='',
+           #legend.labs=c('Melosus','Metapyrin','None'),
+           break.time.by=1,
+           #conf.int = T,
+           pval = T,pval.method = T,
+           pval.size=5,
+           #risk.table = T,ncensor.plot=F,
+           #risk.table.pos='in', https://github.com/kassambara/survminer/issues/245
+           risk.table = 'abs_pct',
+           risk.table.title='Number at risk by analgesic : n (%)',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           #title='Survival plot by analgesic',
+           xlab='Time (d)')
+pi1a
+
+save(pi1a,file = 'pi1c.rda')
+dev.off()
+
+kmfit2 <- survfit(Surv(time,status)~Sex,
+                  data = combined_sur)
+tiff(filename = 'pi1sex1_0714.tiff', #pi1a, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+#https://stackoverflow.com/questions/59041065/how-do-i-change-the-font-for-all-elements-in-ggsurvplot
+pi1sex <- ggsurvplot(kmfit2,
+                   #data = combined_sur,
+                   #fun = 'pct',
+                   #legend='bottom',
+                   size=1.8,
+                   font.legend = c(18, "bold"),
+                   font.x=c(20,'bold'),
+                   font.y=c(20,'bold'),
+                   font.caption=c(14,'bold'),
+                   font.tickslab=c(16,'bold'),#for x,and y axis
+                   legend.title='',
+                   legend.labs=c('Female','Male'),
+                   break.time.by=1,
+                   #conf.int = T,
+                   pval = T,pval.method = T,
+                   pval.size=5,
+                   tables.height = .4,
+                   #risk.table = T,ncensor.plot=F,
+                   #risk.table.pos='in', https://github.com/kassambara/survminer/issues/245
+                   risk.table = 'abs_pct',
+                   risk.table.title='Number at risk by analgesic : n (%)',
+                   surv.scale='percent',
+                   #ggtheme = theme_bw(),
+                   #linetype = 'strata',
+                   #title='Survival plot by analgesic',
+                   xlab='Time (d)')
+pi1sex
+
+save(pi1a,file = 'pi1c.rda')
+dev.off()
+ggsurvplot_facet(kmfit2,combined_sur,facet.by = 'Analgesic',
+                 pallette='jco',pval = T)
+#error for display p-value
+
+table <- ggrisktable(kmfit2,data = combined_sur,
+                     color='Sex',
+            risk.table.type = 'percentage',
+            risk.table.title='Number at risk by gender')
+table
+
+kmfit2_1 <- survfit(Surv(time,status)~Sex+Analgesic,combined_sur)
+
+tiff(filename = 'pi1sT.tiff',
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi1s <- ggsurvplot(kmfit2_1,#color = Sex,
+                   palette = c("#29BF12","#00A5CF","#DE1A1A", 
+                               "#29BF12","#00A5CF","#DE1A1A"),
+                   #data = combined_sur,
+                   #fun = 'pct',
+                   #legend='bottom',
+                   #facet.by = 'Sex',
+                   #legend.title='',
+                   legend.labs=c('Female, Melosus',
+                                 'Female, Metapyrin',
+                                 'Female, None',
+                                 'Male, Melosus',
+                                 'Male, Metapyrin',
+                                 'Male, None'),
+                   #break.time.by=1,
+                  #conf.int = T,
+                  size=1.8, 
+                  font.legend = c(18, "bold"),
+                  font.x=c(20,'bold'),
+                  font.y=c(20,'bold'),
+                  font.caption=c(14,'bold'),
+                  font.tickslab=c(16,'bold'),
+                  legend.title='',
+                   pval = T,pval.method = T,
+                   pval.size=5,
+                   risk.table = T,
+                   ncensor.plot=F,
+                   #risk.table = 'abs_pct',
+                   risk.table.title='Number at risk by gender: n',
+                   surv.scale='percent',
+                   #ggtheme = theme_bw(),
+                   #linetype = 'strata',
+                  # title='Survival plot by gender',
+                   xlab='Time (d)')
+pi1s
+#pi1s$plot+facet_wrap(~strata)
+pi1sT <- pi1s$table+facet_grid(.~Analgesic,scales = 'free')+
+  theme(legend.position = 'none')
+pi1sT
+
+pi1sT <- pi1s$table+facet_grid(.~Sex,scales = 'free')+
+  theme(legend.position = 'none')
+pi1sT
+
+pi1s1 <- pi1s$plot+facet_wrap(~Sex)+
+  theme(strip.text.x = element_text(size = 12,face = 'bold'))
+pi1s1
+#save(pi1sT,file = 'pi1sT.rda')
+dev.off()
+
+ggarrange(pi1sex,pi1s1)
+
+kmfit2_2 <- survfit(Surv(time,status)~Analgesic,
+                  data = combined_sur)
+sex <- c('Female','Male')
+names(sex) <- c('Sex: Female','Sex: Male')
+pi1sex3 <- ggsurvplot_facet(kmfit2_2,combined_sur,facet.by = 'Sex',
+                 size=1.8, 
+                 font.legend = c(18, "bold"),
+                 font.x=c(20,'bold'),
+                 font.y=c(20,'bold'),
+                 font.caption=c(14,'bold'),
+                 font.tickslab=c(16,'bold'),
+                 legend.title='',
+                 axis.ticks=element_text('Female','Male'),
+                 #labeller=labeller(Sex=sex),
+                 xlab='Time (d)',
+                 ylab='Overall survival')+
+  theme()
+
+tiff(filename = 'pi1sex3_0714.tiff', #pi1s1, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+pi1e <- ggarrange(pi1sex3,pi1sT,ncol = 1,
+                  heights = c(.6,.4))
+pi1e
+dev.off()
+
+ggsurvplot_facet(kmfit2_2,combined_sur,facet.by = 'Sex',
+                 size=1.8, 
+                 font.legend = c(18, "bold"),
+                 font.x=c(20,'bold'),
+                 font.y=c(20,'bold'),
+                 font.caption=c(14,'bold'),
+                 font.tickslab=c(16,'bold'),
+                 legend.title='',
+                 pval = T,pval.method = T,
+                 pval.size=5,
+                 tables.height = .4,
+                 risk.table = T,
+                 ncensor.plot=F,
+                 #risk.table = 'abs_pct',
+                 risk.table.title='Number at risk by gender: n',
+                 surv.scale='percent',
+                 #ggtheme = theme_bw(),
+                 #linetype = 'strata',
+                 # title='Survival plot by gender',
+                 labeller=labeller(Sex=sex),
+                 xlab='Time (d)',
+                 ylab='Overall survival')
+
+
+tiff(filename = 'pi1s1.tiff', pi1s1, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+pi1s1 <- pi1s$plot+facet_wrap(~Analgesic)+
+  theme(strip.text.x = element_text(size = 12,face = 'bold'))
+#error, https://github.com/kassambara/survminer/issues/64
+#want to change the color of facet, change 6 colors in 2 colors differs by gender
+
+pi1s1
+save(pi1s1,file = 'pi1s1.rda')
+dev.off()
+
+tiff(filename = 'pi1sex_0714.tiff', #pi1s1, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+pi1e <- ggarrange(pi1s1,pi1sT,ncol = 1,
+          heights = c(.6,.4))
+pi1e
+dev.off()
+save(pi1e,file = 'pi1e.rda')
+#arrange faceted survival curve and risk tables
+# Arrange faceted survival curves and risk tables
+g2 <- ggplotGrob(pi1s1)
+g3 <- ggplotGrob(pi1sT)
+min_ncol <- min(ncol(g2), ncol(g3))
+library(grid)
+library(gridExtra)
+g <- gridExtra::gtable_rbind(g2[, 1:min_ncol], g3[, 1:min_ncol], size="last")
+g$widths <- grid::unit.pmax(g2$widths, g3$widths)
+grid::grid.newpage()
+grid::grid.draw(g)
+#inappropriate distance for plot
+#no solution for now!!! look back when have time!
+
+
+
+
+
+# https://rpkgs.datanovia.com/survminer/reference/ggsurvplot_facet.html
+ggsurvplot_facet(kmfit2_1,combined_sur,
+                 facet.by = 'Sex',
+                 pval = T,pval.method = T)
+#error
+ggsurvplot_facet(kmfit2_1,combined_sur,
+                 facet.by = 'Analgesic',
+                 pval = T,pval.method = T,
+                 #could not get pval for single sex comparision
+                 legend.title='Gender',
+                 legend.labs=c('Female','Male'),
+                 title='Survival plot by gender',
+                 xlab='Time (d)',
+                 ncensor.plot=F,
+                 risk.table = 'abs_pct',
+                 risk.table.title='Number at risk by gender: n(%)',
+                 surv.scale='percent')
+#error
+#add female vs male in overall survival 
+#facet the survival for three conditions of painkiller
+#change the forest plot, add gender
+Sys.setenv(LANG = "en")
+combined_sur$Analgesic <- factor(combined_sur$Analgesic,
+                                 levels = c('None','Metapyrin','Melosus'))
+
+combined_sur$Analgesic <- relevel(combined_sur$Analgesic,ref = 'No')
+combined_sur$Sex <- factor(combined_sur$Sex,
+                           levels = c('f','m'))
+coxfit <- coxph(Surv(time, status) ~ Analgesic + Sex,
+                data = combined_sur)
+summary(coxfit)$sctest[3]
+
+options(scipen = 1)
+ggforest(coxfit,data = combined_sur)
+#error,error, error
+
+str(combined_sur)
+library(forestplot)
+m <- summary(coxfit)
+colnames(m$coefficients)
+colnames(m$conf.int)
+
+p = ifelse(
+  m$coefficients[, 5] < 0.001,
+  "<0.001 ***",
+  ifelse(
+    m$coefficients[, 5] < 0.01,
+    "<0.01  **",
+    ifelse(
+      m$coefficients[, 5] < 0.05,
+      paste(round(m$coefficients[, 5], 3), " *"),
+      round(m$coefficients[, 5], 3)
+    )
+  )
+)
+
+#HR和它的置信区间
+dat2 = as.data.frame(round(m$conf.int[, c(1, 3, 4)], 2))
+dat2 = tibble::rownames_to_column(dat2, var = "Trait")
+colnames(dat2)[2:4] = c("HR", "lower", "upper")
+#需要在图上显示的HR文字和p值
+dat2$HR2 = paste0(dat2[, 2], "(", dat2[, 3], "-", dat2[, 4], ")")
+dat2$p = p
+dat2
+rownames(dat2)
+str(dat2)
+
+forestplot(
+  dat2[, c(1, 4, 6)],
+  mean = dat2[, 2],
+  lower = dat2[, 3],
+  upper = dat2[, 4],
+  zero = 1,
+  boxsize = 0.4,
+  col = fpColors(box = '#1075BB', lines = 'black', zero = 'grey'),
+  lty.ci = "solid",
+  graph.pos = 2
+)
+
+dat2$Trait = str_remove(dat2$Trait, "gender|stage")
+
+ins = function(x) {
+  c(x, rep(NA, ncol(dat2) - 1))
+}
+
+library(stringr)
+dat2$Trait <- str_remove(dat2$Trait,'Analgesic | Gender')
+ins = function(x) {
+  c(x, rep(NA, ncol(dat2) - 1))
+}
+
+dat2 = rbind(
+  c("Trait", NA, NA, NA, "HR", "p"),
+  ins("Trait"),
+  ins("Analgeis"),
+  dat2[1:2, ],
+  ins("Gender"),
+  ins("female"),
+  dat2[3, ]
+)
+for(i in 2:4) {
+  dat2[, i] = as.numeric(dat2[, i])
+}
+str(dat2)
+forestplot(
+  dat2[, c(1, 5, 6)],
+  mean = dat2[, 2],
+  lower = dat2[, 3],
+  upper = dat2[, 4],
+  zero = 1,
+  boxsize = 0.4,
+  col = fpColors(box = '#1075BB', lines = 'black', zero = 'grey'),
+  lty.ci = "solid",
+  graph.pos = 2,
+  #xticks = F,
+  is.summary = c(T, T, F, F, T, rep(F, 10)),
+  align = "l",
+  hrzl_lines = list(
+    "1" = gpar(lty=1),
+    "2" = gpar(lty=1),
+    "16"= gpar(lty=1)),
+  colgap = unit(5, 'mm')
+)
+#error,error,error!!!
+作者：小洁忘了怎么分身
+链接：https://www.jianshu.com/p/58c90b2f3910
+
+library(dplyr)
+combined_sur$Sex <- recode(combined_sur$Sex,'f'='Female','m'='Male')
+library(forestmodel)
+tiff(filename = 'pi1b.tiff', #pi1b, 
+     units="cm",#scale = 1, 
+     width=45, height=38, 
+     res = 600, compression= "lzw")
+
+set.seed(1234)
+pi1b <- forest_model(glm(status ~ Sex + Analgesic,
+                 data = combined_sur,
+                 family = 'binomial'))
+pi1b
+save(pi1b,file = 'pi1b.rda')
+#https://stackoverflow.com/questions/60757616/changing-the-font-size-of-x-axis-labels-in-forestplot-r-function 
+#add txt_gp = fpTxtGp(ticks=gpar(cex=4)),
+dev.off()
+#works well
+#https://community.rstudio.com/t/forrest-plot-changing-column-names/33317/12
+
+
+#change y-axis names as mean cumulative grimace scale
+#change y-axis names as score points distribution
+#maybe add 1 point for each grimace scale
+#add changes of 5 separative scale for pain
+#change y-axis name as Cumulative CSS points
+#add legend as css1 (No signs of illness, <5 points)...
+##save the plot with ggsave
+ggsave('.tiff',plot = lp, units="cm", 
+       width=45, height=38, 
+       dpi = 600, compression= "lzw")
+#did not function well, could like to change to base function in r, 
+#with tiff
+
+devtools::install_github("thomasp85/patchwork")
+library(patchwork)
+#https://patchwork.data-imaginist.com/
+#https://gotellilab.github.io/GotelliLabMeetingHacks/NickGotelli/ggplotPatchwork.html
+pi1a$plot + pi1b +
+  plot_annotation(tag_levels = "A",tag_suffix = ".")
+
+#20220615
+library(ggpubr)
+ggarrange(pi1a$plot,pi1b,pi1a$table,
+          ncol = 2,
+          nrow = 2,
+          heights = c(1.5,0.5),#no effect
+          widths = c(1,1),
+          labels = c('A','B'))
+          #common.legend = T,
+
+
+
+
+
+par(mfrow=c(1,2))
+pi1a
+pi1b
+par(mfrow = c(1, 1))
+#error,error,error
+devtools::install_github("zzawadz/customLayout")
+library(customLayout)
+lay1 <- lay_new(matrix(1:2,ncol = 2))
+lay_show(lay1)
+
+
