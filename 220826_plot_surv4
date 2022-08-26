@@ -1,1 +1,80 @@
+#220826 survival for 4th 
+X20220819survival_run4 <- read_excel("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/220819_4th_run/20220819survival_run4.xlsx")
+
+surv4 <- X20220819survival_run4
+setwd("B:/ORG/Forschung/AN3/Liu_Na_LN/20220419_cxcr2_sepsis/220819_4th_run")
+
+surv4  <-  surv4[-1,]
+#exclude 2 mice without sepsis, at hte location of 32 - 85178 and 48 -85251
+surv4 <- surv4[-c(32,48),]
+names(surv4)[c(7,8)] <- c('Time','Status')
+
+surv4$Analgesic <- factor(surv4$Analgesic,
+                          labels = c('No','Metapyrin','Melosus'))
+
+surv_a <-  survival::Surv(surv4$Time,surv4$Status)
+
+kmfit1 <- survival::survfit(surv_a~1,
+                            data=surv4)
+
+library(survminer)
+ggsurvplot(kmfit1, data=surv4)
+
+
+p_kmfit1 <- ggsurvplot(kmfit1,
+                       #data = combined_sur,
+                       legend.title='',
+                       legend.labs='Sepsis',
+                       break.time.by=1,
+                       xlim=c(0,7),
+                       pval = T,pval.method = T,
+                       risk.table = T,ncensor.plot=F,
+                       risk.table.title='Number at risk by time',
+                       surv.scale='percent',
+                       #ggtheme = theme_bw(),
+                       #linetype = 'strata',
+                       title='4th Survival plot of PCI',
+                       xlab='Time(d)')
+'''
+survplot$plot+
+  geom_hline(yintercept=1,size=1)
+'''
+
+kmfit2 <- survival::survfit(surv_a~surv4$Sex,
+                            data=surv4)
+
+p_kmfit2 <-  ggsurvplot(kmfit2,
+           #data = combined_sur,
+           legend.title='Gender',
+           legend.labs=c('Female','Male'),
+           break.time.by=1,
+           xlim=c(0,7),
+           pval = T,pval.method = T,
+           risk.table = T,ncensor.plot=F,
+           risk.table.title='Number at risk by time',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           title='Survival plot by gender',
+           xlab='Time(d)')
+
+kmfit3 <-  survival::survfit(surv_a~surv4$Analgesic)
+
+ggsurvplot(kmfit3,
+           data = surv4,
+           legend.title='Analgesic',
+           legend.labs=c('Melosus','Metapyrin','No'),
+           break.time.by=1,
+           xlim=c(0,7),
+           pval = T,pval.method = T,
+           risk.table = T,ncensor.plot=F,
+           risk.table.title='Number at risk by time',
+           surv.scale='percent',
+           #ggtheme = theme_bw(),
+           #linetype = 'strata',
+           title='Survival plot by analgesic',
+           xlab='Time(d)')
+
+table(surv4$Analgesic)
+
 
