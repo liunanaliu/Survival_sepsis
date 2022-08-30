@@ -8,6 +8,11 @@ combined_bw5$run[(721:1242)] <- "Severity"
 table(combined_bw5$run)
 combined_bw5$run <- factor(combined_bw5$run,
                            levels = c("Mild","Severity"))
+combined_bw5$sr <- paste(combined_bw5$Sex,combined_bw5$run,sep = ",")
+table(combined_bw5$sr)
+
+combined_bw5$ar <- paste(combined_bw5$Analgesic,combined_bw5$run,sep = ",")
+table(combined_bw5$ar)
 
 #############################################
 pi2a <- ggline(combined_bw5,"Time","Weight",linetype = "Analgesic",
@@ -29,10 +34,6 @@ pi2a <- ggline(combined_bw5,"Time","Weight",linetype = "Analgesic",
 pi2a
 
 ######################################################
-ggplot(combined_bw5,aes(Time,Weight))+
-  geom_line(color= Analgesic,shape= run)
-combined_bw5$sr <- paste(combined_bw5$Sex,combined_bw5$run,sep = ",")
-table(combined_bw5$sr)
 
 pi2b <- ggline(combined_bw5,"Time","Weight",#linetype = "Analgesic",
                color ="sr",
@@ -58,8 +59,6 @@ pi2b <- ggline(combined_bw5,"Time","Weight",#linetype = "Analgesic",
 pi2b
 
 ######################################################
-combined_bw5$ar <- paste(combined_bw5$Analgesic,combined_bw5$run,sep = ",")
-table(combined_bw5$ar)
 
 pi2b2 <- ggline(combined_bw5,"Time","Weight",#linetype = "Analgesic",
                color ="ar",
